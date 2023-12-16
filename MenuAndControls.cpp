@@ -9,6 +9,7 @@
 #include "MenuAndControls.h"
 #include "MainFrm.h"
 
+#include <iostream>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -89,6 +90,17 @@ BOOL CMenuAndControlsApp::InitInstance()
 	// 적절한 내용으로 수정해야 합니다.
 	SetRegistryKey(_T("로컬 애플리케이션 마법사에서 생성된 애플리케이션"));
 
+#ifdef _DEBUG
+	if (!AllocConsole()) {
+		TRACE0("콘솔 창을 만들지 못했습니다!");
+		return FALSE;
+	} else {
+		FILE* pCout;
+		freopen_s(&pCout, "CONOUT$", "w", stdout);
+		std::cout.clear();
+		std::wcout.clear();
+	}
+#endif
 
 	// 주 창을 만들기 위해 이 코드에서는 새 프레임 창 개체를
 	// 만든 다음 이를 애플리케이션의 주 창 개체로 설정합니다.
@@ -115,6 +127,10 @@ int CMenuAndControlsApp::ExitInstance()
 {
 	//TODO: 추가한 추가 리소스를 처리합니다.
 	AfxOleTerm(FALSE);
+
+#ifdef _DEBUG
+	FreeConsole();
+#endif
 
 	return CWinApp::ExitInstance();
 }
