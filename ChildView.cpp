@@ -23,6 +23,18 @@ CString GetSystemTimeAndDate() {
 	return CTime::GetCurrentTime().Format("%Y-%m-%d %H:%M:%S");
 }
 
+
+/*
+\brief: 원을 그립니다
+
+
+\dc: 디바이스 컨텍스트
+\center: 원의 중심 좌표
+\radius: 원의 반지름
+\color: 도형의 내부 색
+\thickness: 테두리 두께
+\color_line: 테두리의 색
+*/
 void Circle(CDC* dc,
 						CPoint center, int radius, COLORREF color,
 						int thickness = 1, COLORREF color_line = RGB(0, 0, 0))
@@ -44,6 +56,16 @@ void Circle(CDC* dc,
 	dc->SelectObject(pen_prev);
 }
 
+/*
+\brief: 직사각형을 그립니다
+
+
+\dc: 디바이스 컨텍스트
+\rect: 직사각형의 좌표
+\color: 도형의 내부 색
+\thickness: 테두리 두께
+\color_line: 테두리의 색
+*/
 void Rectangle(CDC* dc,
 							 CRect rect, COLORREF color,
 							 int thickness = 1, COLORREF color_line = RGB(0, 0, 0)) {
@@ -58,6 +80,18 @@ void Rectangle(CDC* dc,
 	dc->SelectObject(pen_prev);
 }
 
+
+/*
+\brief: 직사각형을 그립니다
+
+
+\dc: 디바이스 컨텍스트
+\top_left: 직사각형의 왼쪽 위의 좌표
+\bottom_right: 직사각형의 오른쪽 아래의 좌표
+\color: 도형의 내부 색
+\thickness: 테두리 두께
+\color_line: 테두리의 색
+*/
 void Rectangle(CDC* dc,
 							 CPoint top_left, CPoint bottom_right, COLORREF color,
 							 int thickness = 1, COLORREF color_line = RGB(0, 0, 0))
@@ -65,7 +99,55 @@ void Rectangle(CDC* dc,
 	Rectangle(dc, {top_left, bottom_right}, color, thickness, color_line);
 }
 
+/*
+\brief: 직선을 그립니다
+
+
+\dc: 디바이스 컨텍스트
+\start: 직선의 시작점 좌표
+\end: 직선의 끝점 좌표
+\thickness: 직선의 두께
+\color_line: 직선의 색
+*/
+void Line(CDC* dc,
+					CPoint start, CPoint end, int thickness = 1, COLORREF color = RGB(0, 0, 0)) {
+	CPen pen(PS_SOLID, thickness, color);
+	auto pen_prev = dc->SelectObject(&pen);
+
+	dc->MoveTo(start);
+	dc->LineTo(end);
+
+	dc->SelectObject(pen_prev);
 }
+
+
+
+/*
+\brief: 다각형을 그립니다
+
+
+\dc: 디바이스 컨텍스트
+\points: 다각형의 점 좌표들
+\color: 도형의 내부 색
+\thickness: 테두리 두께
+\color_line: 테두리의 색
+*/
+void Polygon(CDC* dc,
+						 const std::vector<CPoint>& points, COLORREF color,
+						 int thickness = 1, COLORREF color_line = RGB(0, 0, 0)) {
+	CPen pen(thickness <= 0 ? PS_NULL : PS_SOLID, thickness, color_line);
+	CBrush brush(color);
+	
+	CPen* pen_prev = dc->SelectObject(&pen);
+	CBrush* prev_brush = dc->SelectObject(&brush);
+
+	dc->Polygon(points.data(), points.size());
+	
+	dc->SelectObject(prev_brush);
+	dc->SelectObject(pen_prev);
+}
+
+} // anonymous namespace
 
 // CChildView
 
@@ -105,6 +187,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_COMMAND(ID_DRAW_CURVE, &CChildView::OnDrawCurve)
 	ON_UPDATE_COMMAND_UI(ID_DRAW_CURVE, &CChildView::OnUpdateDrawCurve)
 	ON_WM_KEYDOWN()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 
@@ -164,7 +247,14 @@ afx_msg void CChildView::OnMyPaint(CDC* dc) {
 	// 튀기는 공 그리기
 	Circle(dc, m_ball_pos, m_ball_radius, RGB(0, 255, 255));
 
+	// 고무 벽 그리기
 	Rectangle(dc, m_wall_rect, RGB(255, 255, 0));
+
+	// 직선 그리기
+	Line(dc, {100, 100}, {200, 300});
+
+	// 폴리곤 그리기
+	Polygon(dc, {{300, 100}, {300, 50}, {250, 75}, {250, 100}}, RGB(255, 0, 255));
 }
 
 void CChildView::OnContextMenu(CWnd* pWnd, CPoint point)
@@ -204,14 +294,17 @@ void CChildView::CalculateBall() {
 		}
 	}
 
-	// 고무벽과 충돌했는지 검사
+	// 고무벽과 충돌했는지 검사 (rough)
 	CRect collision;
 	if (collision.IntersectRect(CRect(m_ball_pos, SIZE{ m_ball_radius, m_ball_radius }), m_wall_rect)) {
-		if (m_ball_pos.x + m_ball_radius >= m_wall_rect.left) {
-			m_ball_pos.x -= m_ball_pos.x + m_ball_radius - m_wall_rect.left;
+		auto ball_xl = m_ball_pos.x - m_ball_radius;
+		auto ball_xr = m_ball_pos.x + m_ball_radius;
+
+		if (ball_xl <= m_wall_rect.left) {
+			m_ball_pos.x -= 2 * (ball_xr - m_wall_rect.left);
 			m_ball_velocity.x *= -1;
-		} else if (m_ball_pos.x - m_ball_radius < m_wall_rect.right) {
-			m_ball_pos.x = m_wall_rect.right - (m_ball_pos.x - m_ball_radius);
+		} else if (ball_xr >= m_wall_rect.right) {
+			m_ball_pos.x += 2 * (m_wall_rect.right - ball_xl);
 			m_ball_velocity.x *= -1;
 		}
 	}
@@ -394,4 +487,10 @@ void CChildView::OnDrawCircle() {
 }
 void CChildView::OnUpdateDrawCircle(CCmdUI* pCmdUI) {
 	pCmdUI->SetCheck(m_toolbar_mode == kToolbarDrawCircle);
+}
+
+
+BOOL CChildView::OnEraseBkgnd(CDC* pDC) {
+	return TRUE;
+	// return CWnd::OnEraseBkgnd(pDC);
 }
