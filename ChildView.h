@@ -104,8 +104,8 @@ public:
 	EventListener<MouseEvent, UINT, CPoint> m_mouse_event_listeners;
 
 	afx_msg void OnSelectArea();
-	afx_msg void OnDrawLine();
 	afx_msg void OnUpdateSelectarea(CCmdUI* pCmdUI);
+	afx_msg void OnDrawLine();
 	afx_msg void OnUpdateDrawLine(CCmdUI* pCmdUI);
 	afx_msg void OnRemoveSelected();
 	afx_msg void OnDrawRectangle();
@@ -116,6 +116,8 @@ public:
 	afx_msg void OnUpdateDrawCurve(CCmdUI* pCmdUI);
 
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	EventListener<UINT, UINT, UINT> m_keyboard_listeners;
+
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 
