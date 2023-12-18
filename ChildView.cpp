@@ -316,11 +316,6 @@ int CChildView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-	CRect rect;
-	GetClientRect(&rect);
-	m_ball_pos.x = rect.Width() / 2;
-	m_ball_pos.y = rect.Height() / 2;
-
 	// 시계 타이머 설정(함수 호출 주기 설정)
 	SetTimer(kTimerClock, /* ms */ 1000, nullptr);
 	m_timer_event_listeners.Add(kTimerClock, [this](){ m_current_time = GetSystemTimeAndDate(); });
