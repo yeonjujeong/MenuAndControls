@@ -316,11 +316,6 @@ int CChildView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-	CRect rect;
-	GetClientRect(&rect);
-	m_ball_pos.x = rect.Width() / 2;
-	m_ball_pos.y = rect.Height() / 2;
-
 	// 시계 타이머 설정(함수 호출 주기 설정)
 	SetTimer(kTimerClock, /* ms */ 1000, nullptr);
 	m_timer_event_listeners.Add(kTimerClock, [this](){ m_current_time = GetSystemTimeAndDate(); });
@@ -356,6 +351,8 @@ int CChildView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// 우클릭 시 그리기 모드 취소
 	m_mouse_event_listeners.Add(kMouseRButtonDown, [this](auto, auto p) { m_toolbar_mode = kToolbarNone; });
+	// ESC 시 그리기 모드 취소
+	m_keyboard_listeners.Add(VK_ESCAPE, [this](...) { m_toolbar_mode = kToolbarNone; });
 
 	return 0;
 }
@@ -429,13 +426,8 @@ void CChildView::OnMButtonDblClk(UINT nFlags, CPoint point) {
 
 
 void CChildView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
+	m_keyboard_listeners(nChar, nRepCnt, nFlags);
 	m_keyboard = nChar;
-	m_toolbar_mode = kToolbarNone;
-	switch (nChar) {
-		case VK_ESCAPE:
-			m_toolbar_mode = kToolbarNone;
-			break;
-	}
 	CWnd::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
